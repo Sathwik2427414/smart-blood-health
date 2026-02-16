@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Users, Plus, Search, Check, X } from "lucide-react";
-import { useDonors, useAddDonor } from "@/hooks/useDatabaseQueries";
+import { useDonors, useAddDonor, useAddBloodUnit, useBloodUnits } from "@/hooks/useDatabaseQueries";
+import { BloodUnit } from "@/lib/types";
 import { Donor } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,7 +17,9 @@ const item = { hidden: { opacity: 0, y: 15 }, show: { opacity: 1, y: 0 } };
 
 export default function DonorsPage() {
   const { data: donors = [], isLoading } = useDonors();
+  const { data: bloodUnits = [] } = useBloodUnits();
   const addDonor = useAddDonor();
+  const addBloodUnit = useAddBloodUnit();
   const { toast } = useToast();
   const [search, setSearch] = useState("");
   const [open, setOpen] = useState(false);
@@ -26,18 +29,31 @@ export default function DonorsPage() {
 
   const handleAdd = async () => {
     if (!form.name || !form.age) return;
+    const donorId = `D${String(donors.length + 1).padStart(3, "0")}`;
+    const today = new Date().toISOString().split("T")[0];
+    const expiryDate = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
     const newDonor: Donor = {
-      id: `D${String(donors.length + 1).padStart(3, "0")}`,
+      id: donorId,
       ...form,
       age: parseInt(form.age),
-      lastDonationDate: new Date().toISOString().split("T")[0],
+      lastDonationDate: today,
       eligible: true,
+    };
+    const newBloodUnit: BloodUnit = {
+      id: `BU${String(bloodUnits.length + 1).padStart(3, "0")}`,
+      donorId: donorId,
+      donorName: form.name,
+      bloodGroup: form.bloodGroup,
+      collectedDate: today,
+      expiryDate: expiryDate,
+      status: "available",
     };
     try {
       await addDonor.mutateAsync(newDonor);
+      await addBloodUnit.mutateAsync(newBloodUnit);
       setOpen(false);
       setForm({ name: "", age: "", gender: "Male", bloodGroup: "O+", contact: "", address: "" });
-      toast({ title: "Donor registered", description: `${form.name} has been added successfully.` });
+      toast({ title: "Donor registered", description: `${form.name} has been added with a blood unit.` });
     } catch (error) {
       toast({ title: "Error", description: "Failed to register donor.", variant: "destructive" });
     }
