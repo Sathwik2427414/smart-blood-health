@@ -1,8 +1,6 @@
-import { useState } from "react";
 import { motion } from "framer-motion";
 import { Bell, Check } from "lucide-react";
-import { sampleNotifications } from "@/lib/sampleData";
-import { Notification } from "@/lib/types";
+import { useNotifications, useMarkAllNotificationsRead } from "@/hooks/useDatabaseQueries";
 import { Button } from "@/components/ui/button";
 
 const container = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.05 } } };
@@ -11,10 +9,14 @@ const item = { hidden: { opacity: 0, y: 15 }, show: { opacity: 1, y: 0 } };
 const typeIcon: Record<string, string> = { alert: "🔴", warning: "🟡", info: "🔵" };
 
 export default function NotificationsPage() {
-  const [notifications, setNotifications] = useState<Notification[]>(sampleNotifications);
+  const { data: notifications = [], isLoading } = useNotifications();
+  const markAllRead = useMarkAllNotificationsRead();
 
-  const markAllRead = () => setNotifications(notifications.map((n) => ({ ...n, read: true })));
   const unread = notifications.filter((n) => !n.read).length;
+
+  if (isLoading) {
+    return <div className="flex items-center justify-center h-64 text-muted-foreground">Loading notifications...</div>;
+  }
 
   return (
     <motion.div variants={container} initial="hidden" animate="show" className="space-y-6">
@@ -26,7 +28,7 @@ export default function NotificationsPage() {
           <p className="text-sm text-muted-foreground mt-1">{unread} unread alerts</p>
         </div>
         {unread > 0 && (
-          <Button variant="outline" size="sm" onClick={markAllRead} className="gap-1.5 text-xs">
+          <Button variant="outline" size="sm" onClick={() => markAllRead.mutate()} className="gap-1.5 text-xs">
             <Check className="w-3 h-3" /> Mark all read
           </Button>
         )}

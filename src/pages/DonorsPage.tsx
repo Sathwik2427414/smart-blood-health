@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Users, Plus, Search, Check, X } from "lucide-react";
-import { sampleDonors } from "@/lib/sampleData";
+import { useDonors, useAddDonor } from "@/hooks/useDatabaseQueries";
 import { Donor } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,19 +9,22 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useToast } from "@/hooks/use-toast";
 
 const container = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.05 } } };
 const item = { hidden: { opacity: 0, y: 15 }, show: { opacity: 1, y: 0 } };
 
 export default function DonorsPage() {
-  const [donors, setDonors] = useState<Donor[]>(sampleDonors);
+  const { data: donors = [], isLoading } = useDonors();
+  const addDonor = useAddDonor();
+  const { toast } = useToast();
   const [search, setSearch] = useState("");
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({ name: "", age: "", gender: "Male" as Donor["gender"], bloodGroup: "O+" as Donor["bloodGroup"], contact: "", address: "" });
 
   const filtered = donors.filter((d) => d.name.toLowerCase().includes(search.toLowerCase()) || d.bloodGroup.toLowerCase().includes(search.toLowerCase()));
 
-  const handleAdd = () => {
+  const handleAdd = async () => {
     if (!form.name || !form.age) return;
     const newDonor: Donor = {
       id: `D${String(donors.length + 1).padStart(3, "0")}`,
@@ -30,10 +33,19 @@ export default function DonorsPage() {
       lastDonationDate: new Date().toISOString().split("T")[0],
       eligible: true,
     };
-    setDonors([newDonor, ...donors]);
-    setOpen(false);
-    setForm({ name: "", age: "", gender: "Male", bloodGroup: "O+", contact: "", address: "" });
+    try {
+      await addDonor.mutateAsync(newDonor);
+      setOpen(false);
+      setForm({ name: "", age: "", gender: "Male", bloodGroup: "O+", contact: "", address: "" });
+      toast({ title: "Donor registered", description: `${form.name} has been added successfully.` });
+    } catch (error) {
+      toast({ title: "Error", description: "Failed to register donor.", variant: "destructive" });
+    }
   };
+
+  if (isLoading) {
+    return <div className="flex items-center justify-center h-64 text-muted-foreground">Loading donors...</div>;
+  }
 
   return (
     <motion.div variants={container} initial="hidden" animate="show" className="space-y-6">
@@ -73,7 +85,9 @@ export default function DonorsPage() {
               </div>
               <div><Label>Contact</Label><Input value={form.contact} onChange={(e) => setForm({ ...form, contact: e.target.value })} placeholder="Phone number" /></div>
               <div><Label>Address</Label><Input value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} placeholder="City, State" /></div>
-              <Button onClick={handleAdd} className="gradient-primary border-0 w-full">Register Donor</Button>
+              <Button onClick={handleAdd} disabled={addDonor.isPending} className="gradient-primary border-0 w-full">
+                {addDonor.isPending ? "Registering..." : "Register Donor"}
+              </Button>
             </div>
           </DialogContent>
         </Dialog>
