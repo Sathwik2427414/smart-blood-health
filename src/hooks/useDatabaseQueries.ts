@@ -150,3 +150,69 @@ export function useMarkAllNotificationsRead() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["notifications"] }),
   });
 }
+
+export function useAddBloodUnit() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (unit: BloodUnit) => {
+      const { error } = await supabase.from("blood_units").insert({
+        id: unit.id,
+        donor_id: unit.donorId,
+        donor_name: unit.donorName,
+        blood_group: unit.bloodGroup,
+        collected_date: unit.collectedDate,
+        expiry_date: unit.expiryDate,
+        status: unit.status,
+        lab_test_id: unit.labTestId || null,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["blood_units"] }),
+  });
+}
+
+export function useAddLabTest() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (test: LabTest) => {
+      const { error } = await supabase.from("lab_tests").insert({
+        id: test.id,
+        blood_unit_id: test.bloodUnitId,
+        donor_name: test.donorName,
+        blood_group: test.bloodGroup,
+        date: test.date,
+        hemoglobin: test.hemoglobin,
+        rbc_count: test.rbcCount,
+        wbc_count: test.wbcCount,
+        platelet_count: test.plateletCount,
+        hematocrit: test.hematocrit,
+        mcv: test.mcv,
+        mch: test.mch,
+        mchc: test.mchc,
+        result: test.result,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["lab_tests"] }),
+  });
+}
+
+export function useAddPrediction() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (pred: Prediction) => {
+      const { error } = await supabase.from("predictions").insert({
+        id: pred.id,
+        lab_test_id: pred.labTestId,
+        donor_name: pred.donorName,
+        date: pred.date,
+        disease: pred.disease,
+        confidence: pred.confidence,
+        severity: pred.severity,
+        description: pred.description,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["predictions"] }),
+  });
+}

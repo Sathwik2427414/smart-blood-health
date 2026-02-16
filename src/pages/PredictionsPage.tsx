@@ -1,12 +1,14 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Brain, Zap, RotateCw, Activity } from "lucide-react";
+import { Brain, Zap, RotateCw, Activity, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { CBCInput, PredictionResult, predictDiseases, generateSampleCBC } from "@/lib/predictionEngine";
+import { useAddLabTest, useAddPrediction, useLabTests, usePredictions } from "@/hooks/useDatabaseQueries";
+import { useToast } from "@/hooks/use-toast";
 
 const container = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.05 } } };
 const item = { hidden: { opacity: 0, y: 15 }, show: { opacity: 1, y: 0 } };
@@ -33,9 +35,18 @@ const fields: { key: keyof CBCInput; label: string; unit: string }[] = [
 ];
 
 export default function PredictionsPage() {
+  const [donorName, setDonorName] = useState("");
+  const [bloodGroup, setBloodGroup] = useState("O+");
   const [input, setInput] = useState<CBCInput>(generateSampleCBC());
   const [results, setResults] = useState<PredictionResult[] | null>(null);
   const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  const addLabTest = useAddLabTest();
+  const addPrediction = useAddPrediction();
+  const { data: labTests = [] } = useLabTests();
+  const { data: predictions = [] } = usePredictions();
+  const { toast } = useToast();
 
   const handlePredict = () => {
     setLoading(true);
@@ -52,6 +63,63 @@ export default function PredictionsPage() {
 
   const updateField = (key: keyof CBCInput, value: string) => {
     setInput({ ...input, [key]: parseFloat(value) || 0 });
+  };
+
+  const handleSaveToDb = async () => {
+    if (!donorName.trim()) {
+      toast({ title: "Error", description: "Please enter donor name before saving.", variant: "destructive" });
+      return;
+    }
+    if (!results || results.length === 0) {
+      toast({ title: "Error", description: "Run prediction first before saving.", variant: "destructive" });
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const today = new Date().toISOString().split("T")[0];
+      const labTestId = `LT${String(labTests.length + 1).padStart(3, "0")}`;
+      const hasAbnormal = results.some(r => r.severity !== "normal");
+
+      // Save lab test
+      await addLabTest.mutateAsync({
+        id: labTestId,
+        bloodUnitId: "",
+        donorName: donorName.trim(),
+        bloodGroup: bloodGroup,
+        date: today,
+        hemoglobin: input.hemoglobin,
+        rbcCount: input.rbcCount,
+        wbcCount: input.wbcCount,
+        plateletCount: input.plateletCount,
+        hematocrit: input.hematocrit,
+        mcv: input.mcv,
+        mch: input.mch,
+        mchc: input.mchc,
+        result: hasAbnormal ? "abnormal" : "safe",
+      });
+
+      // Save each prediction result
+      for (let i = 0; i < results.length; i++) {
+        const r = results[i];
+        await addPrediction.mutateAsync({
+          id: `P${String(predictions.length + 1 + i).padStart(3, "0")}`,
+          labTestId: labTestId,
+          donorName: donorName.trim(),
+          date: today,
+          disease: r.disease,
+          confidence: r.confidence,
+          severity: r.severity,
+          description: r.description,
+        });
+      }
+
+      toast({ title: "Saved!", description: `Lab test & ${results.length} prediction(s) saved for ${donorName}.` });
+    } catch (error) {
+      toast({ title: "Error", description: "Failed to save results.", variant: "destructive" });
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -75,6 +143,31 @@ export default function PredictionsPage() {
             <Button variant="outline" size="sm" onClick={handleRandomize} className="gap-1.5 text-xs">
               <RotateCw className="w-3 h-3" /> Random Sample
             </Button>
+          </div>
+
+          {/* Donor Info */}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label className="text-xs text-muted-foreground">Donor Name</Label>
+              <Input
+                value={donorName}
+                onChange={(e) => setDonorName(e.target.value)}
+                placeholder="Enter donor name"
+                className="text-sm"
+              />
+            </div>
+            <div>
+              <Label className="text-xs text-muted-foreground">Blood Group</Label>
+              <select
+                value={bloodGroup}
+                onChange={(e) => setBloodGroup(e.target.value)}
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                {["A+","A-","B+","B-","AB+","AB-","O+","O-"].map(g => (
+                  <option key={g} value={g}>{g}</option>
+                ))}
+              </select>
+            </div>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
@@ -122,7 +215,19 @@ export default function PredictionsPage() {
 
           {results && !loading && (
             <div className="space-y-3">
-              <h3 className="text-sm font-semibold text-foreground">🧬 Prediction Results</h3>
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-semibold text-foreground">🧬 Prediction Results</h3>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleSaveToDb}
+                  disabled={saving}
+                  className="gap-1.5 text-xs"
+                >
+                  <Save className="w-3 h-3" />
+                  {saving ? "Saving..." : "Save to Lab Tests & Report"}
+                </Button>
+              </div>
               {results.map((r, i) => (
                 <motion.div
                   key={i}
