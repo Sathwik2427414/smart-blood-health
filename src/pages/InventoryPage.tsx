@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
-import { Package, AlertTriangle, Check, Clock, Droplets } from "lucide-react";
-import { sampleBloodUnits } from "@/lib/sampleData";
+import { Package, AlertTriangle, Check, Clock } from "lucide-react";
+import { useBloodUnits } from "@/hooks/useDatabaseQueries";
 import { Badge } from "@/components/ui/badge";
 import StatCard from "@/components/StatCard";
 
@@ -15,9 +15,15 @@ const statusConfig: Record<string, { label: string; className: string }> = {
 };
 
 export default function InventoryPage() {
-  const available = sampleBloodUnits.filter((u) => u.status === "available").length;
-  const expired = sampleBloodUnits.filter((u) => u.status === "expired").length;
-  const reserved = sampleBloodUnits.filter((u) => u.status === "reserved").length;
+  const { data: bloodUnits = [], isLoading } = useBloodUnits();
+
+  const available = bloodUnits.filter((u) => u.status === "available").length;
+  const expired = bloodUnits.filter((u) => u.status === "expired").length;
+  const reserved = bloodUnits.filter((u) => u.status === "reserved").length;
+
+  if (isLoading) {
+    return <div className="flex items-center justify-center h-64 text-muted-foreground">Loading inventory...</div>;
+  }
 
   return (
     <motion.div variants={container} initial="hidden" animate="show" className="space-y-6">
@@ -45,7 +51,7 @@ export default function InventoryPage() {
               </tr>
             </thead>
             <tbody>
-              {sampleBloodUnits.map((u) => {
+              {bloodUnits.map((u) => {
                 const s = statusConfig[u.status];
                 const isExpiringSoon = u.status === "available" && new Date(u.expiryDate) < new Date(Date.now() + 14 * 86400000);
                 return (

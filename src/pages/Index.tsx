@@ -2,7 +2,7 @@ import { motion } from "framer-motion";
 import { Droplets, Users, FlaskConical, Package, Brain, AlertTriangle, TrendingUp, Activity } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import StatCard from "@/components/StatCard";
-import { sampleDonors, sampleBloodUnits, samplePredictions, sampleNotifications } from "@/lib/sampleData";
+import { useDonors, useBloodUnits, usePredictions, useNotifications } from "@/hooks/useDatabaseQueries";
 
 const bloodGroupData = [
   { name: "O+", units: 45 },
@@ -33,9 +33,14 @@ const item = {
 };
 
 export default function Dashboard() {
-  const availableUnits = sampleBloodUnits.filter((u) => u.status === "available").length;
-  const abnormalPredictions = samplePredictions.filter((p) => p.severity !== "normal").length;
-  const unreadAlerts = sampleNotifications.filter((n) => !n.read).length;
+  const { data: donors = [] } = useDonors();
+  const { data: bloodUnits = [] } = useBloodUnits();
+  const { data: predictions = [] } = usePredictions();
+  const { data: notifications = [] } = useNotifications();
+
+  const availableUnits = bloodUnits.filter((u) => u.status === "available").length;
+  const abnormalPredictions = predictions.filter((p) => p.severity !== "normal").length;
+  const unreadAlerts = notifications.filter((n) => !n.read).length;
 
   return (
     <motion.div variants={container} initial="hidden" animate="show" className="space-y-8">
@@ -47,7 +52,7 @@ export default function Dashboard() {
 
       {/* Stat Cards */}
       <motion.div variants={item} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard title="Total Donors" value={sampleDonors.length} subtitle="2 new this month" icon={<Users className="w-5 h-5" />} variant="primary" trend={{ value: 12, positive: true }} />
+        <StatCard title="Total Donors" value={donors.length} subtitle="2 new this month" icon={<Users className="w-5 h-5" />} variant="primary" trend={{ value: 12, positive: true }} />
         <StatCard title="Blood Units" value={availableUnits} subtitle="Available for transfusion" icon={<Droplets className="w-5 h-5" />} variant="success" />
         <StatCard title="ML Predictions" value={abnormalPredictions} subtitle="Abnormal results detected" icon={<Brain className="w-5 h-5" />} variant="warning" />
         <StatCard title="Active Alerts" value={unreadAlerts} subtitle="Unread notifications" icon={<AlertTriangle className="w-5 h-5" />} variant="info" />
@@ -109,7 +114,7 @@ export default function Dashboard() {
           Recent Alerts & Predictions
         </h3>
         <div className="space-y-3">
-          {sampleNotifications.slice(0, 4).map((n) => (
+          {notifications.slice(0, 4).map((n) => (
             <div key={n.id} className={`flex items-start gap-3 p-3 rounded-lg border ${!n.read ? "bg-accent/50 border-primary/20" : "border-border"}`}>
               <div className={`w-2 h-2 mt-1.5 rounded-full shrink-0 ${n.type === "alert" ? "bg-destructive animate-pulse-glow" : n.type === "warning" ? "bg-warning" : "bg-info"}`} />
               <div className="flex-1 min-w-0">

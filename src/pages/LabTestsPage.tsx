@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { FlaskConical } from "lucide-react";
-import { sampleLabTests } from "@/lib/sampleData";
+import { useLabTests } from "@/hooks/useDatabaseQueries";
 import { Badge } from "@/components/ui/badge";
 
 const container = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.05 } } };
@@ -13,6 +13,12 @@ const resultBadge = (result: string) => {
 };
 
 export default function LabTestsPage() {
+  const { data: labTests = [], isLoading } = useLabTests();
+
+  if (isLoading) {
+    return <div className="flex items-center justify-center h-64 text-muted-foreground">Loading lab tests...</div>;
+  }
+
   return (
     <motion.div variants={container} initial="hidden" animate="show" className="space-y-6">
       <motion.div variants={item}>
@@ -33,7 +39,7 @@ export default function LabTestsPage() {
               </tr>
             </thead>
             <tbody>
-              {sampleLabTests.map((t) => (
+              {labTests.map((t) => (
                 <tr key={t.id} className="border-b border-border/50 hover:bg-muted/30 transition-colors">
                   <td className="px-3 py-3 font-mono text-xs text-muted-foreground">{t.id}</td>
                   <td className="px-3 py-3 font-medium text-foreground text-xs">{t.donorName}</td>
