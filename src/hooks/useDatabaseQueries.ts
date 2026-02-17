@@ -20,6 +20,7 @@ const mapBloodUnit = (row: any): BloodUnit => ({
   donorId: row.donor_id,
   donorName: row.donor_name,
   bloodGroup: row.blood_group,
+  componentType: row.component_type || "Whole Blood",
   collectedDate: row.collected_date,
   expiryDate: row.expiry_date,
   status: row.status,
@@ -151,6 +152,17 @@ export function useMarkAllNotificationsRead() {
   });
 }
 
+export function useUpdateBloodUnitStatus() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, status }: { id: string; status: string }) => {
+      const { error } = await supabase.from("blood_units").update({ status }).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["blood_units"] }),
+  });
+}
+
 export function useAddBloodUnit() {
   const queryClient = useQueryClient();
   return useMutation({
@@ -160,6 +172,7 @@ export function useAddBloodUnit() {
         donor_id: unit.donorId,
         donor_name: unit.donorName,
         blood_group: unit.bloodGroup,
+        component_type: unit.componentType || "Whole Blood",
         collected_date: unit.collectedDate,
         expiry_date: unit.expiryDate,
         status: unit.status,

@@ -10,12 +10,12 @@ export const sampleDonors: Donor[] = [
 ];
 
 export const sampleBloodUnits: BloodUnit[] = [
-  { id: "BU001", donorId: "D001", donorName: "Rahul Sharma", bloodGroup: "O+", collectedDate: "2025-11-15", expiryDate: "2026-02-15", status: "available" },
-  { id: "BU002", donorId: "D002", donorName: "Priya Patel", bloodGroup: "A+", collectedDate: "2025-12-20", expiryDate: "2026-03-20", status: "available" },
-  { id: "BU003", donorId: "D003", donorName: "Amit Kumar", bloodGroup: "B+", collectedDate: "2025-10-05", expiryDate: "2026-01-05", status: "expired" },
-  { id: "BU004", donorId: "D004", donorName: "Sneha Reddy", bloodGroup: "AB-", collectedDate: "2026-01-10", expiryDate: "2026-04-10", status: "available" },
-  { id: "BU005", donorId: "D005", donorName: "Vikram Singh", bloodGroup: "O-", collectedDate: "2025-09-25", expiryDate: "2025-12-25", status: "used" },
-  { id: "BU006", donorId: "D006", donorName: "Anjali Gupta", bloodGroup: "A-", collectedDate: "2025-11-30", expiryDate: "2026-02-28", status: "reserved" },
+  { id: "BU001", donorId: "D001", donorName: "Rahul Sharma", bloodGroup: "O+", componentType: "Whole Blood", collectedDate: "2025-11-15", expiryDate: "2026-02-15", status: "available" },
+  { id: "BU002", donorId: "D002", donorName: "Priya Patel", bloodGroup: "A+", componentType: "Plasma", collectedDate: "2025-12-20", expiryDate: "2026-03-20", status: "available" },
+  { id: "BU003", donorId: "D003", donorName: "Amit Kumar", bloodGroup: "B+", componentType: "RBC", collectedDate: "2025-10-05", expiryDate: "2026-01-05", status: "expired" },
+  { id: "BU004", donorId: "D004", donorName: "Sneha Reddy", bloodGroup: "AB-", componentType: "WBC", collectedDate: "2026-01-10", expiryDate: "2026-04-10", status: "available" },
+  { id: "BU005", donorId: "D005", donorName: "Vikram Singh", bloodGroup: "O-", componentType: "Platelets", collectedDate: "2025-09-25", expiryDate: "2025-12-25", status: "used" },
+  { id: "BU006", donorId: "D006", donorName: "Anjali Gupta", bloodGroup: "A-", componentType: "Whole Blood", collectedDate: "2025-11-30", expiryDate: "2026-02-28", status: "reserved" },
 ];
 
 export const sampleLabTests: LabTest[] = [

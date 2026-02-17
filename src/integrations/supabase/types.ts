@@ -18,6 +18,7 @@ export type Database = {
         Row: {
           blood_group: string
           collected_date: string
+          component_type: string
           created_at: string
           donor_id: string
           donor_name: string
@@ -29,6 +30,7 @@ export type Database = {
         Insert: {
           blood_group: string
           collected_date: string
+          component_type?: string
           created_at?: string
           donor_id: string
           donor_name: string
@@ -40,6 +42,7 @@ export type Database = {
         Update: {
           blood_group?: string
           collected_date?: string
+          component_type?: string
           created_at?: string
           donor_id?: string
           donor_name?: string

@@ -15,6 +15,7 @@ export interface BloodUnit {
   donorId: string;
   donorName: string;
   bloodGroup: string;
+  componentType: string;
   collectedDate: string;
   expiryDate: string;
   status: "available" | "reserved" | "expired" | "used";

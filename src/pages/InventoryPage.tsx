@@ -1,7 +1,9 @@
+import { useEffect } from "react";
 import { motion } from "framer-motion";
 import { Package, AlertTriangle, Check, Clock } from "lucide-react";
-import { useBloodUnits } from "@/hooks/useDatabaseQueries";
+import { useBloodUnits, useUpdateBloodUnitStatus } from "@/hooks/useDatabaseQueries";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import StatCard from "@/components/StatCard";
 
 const container = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.05 } } };
@@ -16,10 +18,24 @@ const statusConfig: Record<string, { label: string; className: string }> = {
 
 export default function InventoryPage() {
   const { data: bloodUnits = [], isLoading } = useBloodUnits();
+  const updateStatus = useUpdateBloodUnitStatus();
+
+  // Auto-expire units past their expiry date
+  useEffect(() => {
+    bloodUnits.forEach((u) => {
+      if (u.status === "available" && new Date(u.expiryDate) < new Date()) {
+        updateStatus.mutate({ id: u.id, status: "expired" });
+      }
+    });
+  }, [bloodUnits]);
 
   const available = bloodUnits.filter((u) => u.status === "available").length;
   const expired = bloodUnits.filter((u) => u.status === "expired").length;
   const reserved = bloodUnits.filter((u) => u.status === "reserved").length;
+
+  const handleStatusChange = (id: string, newStatus: string) => {
+    updateStatus.mutate({ id, status: newStatus });
+  };
 
   if (isLoading) {
     return <div className="flex items-center justify-center h-64 text-muted-foreground">Loading inventory...</div>;
@@ -45,7 +61,7 @@ export default function InventoryPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border bg-muted/50">
-                {["Unit ID", "Donor", "Blood Group", "Collected", "Expiry", "Status"].map((h) => (
+                {["Unit ID", "Donor", "Blood Group", "Component", "Collected", "Expiry", "Status"].map((h) => (
                   <th key={h} className="text-left px-4 py-3 font-semibold text-muted-foreground text-xs uppercase tracking-wider">{h}</th>
                 ))}
               </tr>
@@ -54,17 +70,34 @@ export default function InventoryPage() {
               {bloodUnits.map((u) => {
                 const s = statusConfig[u.status];
                 const isExpiringSoon = u.status === "available" && new Date(u.expiryDate) < new Date(Date.now() + 14 * 86400000);
+                const isExpired = u.status === "expired";
                 return (
                   <tr key={u.id} className={`border-b border-border/50 hover:bg-muted/30 transition-colors ${isExpiringSoon ? "bg-warning/5" : ""}`}>
                     <td className="px-4 py-3 font-mono text-xs text-muted-foreground">{u.id}</td>
                     <td className="px-4 py-3 font-medium text-foreground text-xs">{u.donorName}</td>
                     <td className="px-4 py-3"><Badge variant="secondary" className="font-mono font-bold">{u.bloodGroup}</Badge></td>
+                    <td className="px-4 py-3"><Badge variant="outline" className="text-xs">{u.componentType}</Badge></td>
                     <td className="px-4 py-3 text-xs text-muted-foreground">{u.collectedDate}</td>
                     <td className="px-4 py-3 text-xs text-muted-foreground">
                       {u.expiryDate}
                       {isExpiringSoon && <span className="ml-1 text-warning">⚠</span>}
                     </td>
-                    <td className="px-4 py-3"><Badge className={`${s.className} hover:opacity-80`}>{s.label}</Badge></td>
+                    <td className="px-4 py-3">
+                      {isExpired ? (
+                        <Badge className={`${s.className} hover:opacity-80`}>{s.label}</Badge>
+                      ) : (
+                        <Select value={u.status} onValueChange={(v) => handleStatusChange(u.id, v)}>
+                          <SelectTrigger className="h-7 w-[120px] text-xs">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="available">Available</SelectItem>
+                            <SelectItem value="used">Used</SelectItem>
+                            <SelectItem value="reserved">Reserved</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      )}
+                    </td>
                   </tr>
                 );
               })}
