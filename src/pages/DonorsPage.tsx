@@ -23,7 +23,7 @@ export default function DonorsPage() {
   const { toast } = useToast();
   const [search, setSearch] = useState("");
   const [open, setOpen] = useState(false);
-  const [form, setForm] = useState({ name: "", age: "", gender: "Male" as Donor["gender"], bloodGroup: "O+" as Donor["bloodGroup"], contact: "", address: "" });
+  const [form, setForm] = useState({ name: "", age: "", gender: "Male" as Donor["gender"], bloodGroup: "O+" as Donor["bloodGroup"], contact: "", address: "", componentType: "Whole Blood" });
 
   const filtered = donors.filter((d) => d.name.toLowerCase().includes(search.toLowerCase()) || d.bloodGroup.toLowerCase().includes(search.toLowerCase()));
 
@@ -44,6 +44,7 @@ export default function DonorsPage() {
       donorId: donorId,
       donorName: form.name,
       bloodGroup: form.bloodGroup,
+      componentType: form.componentType,
       collectedDate: today,
       expiryDate: expiryDate,
       status: "available",
@@ -52,7 +53,7 @@ export default function DonorsPage() {
       await addDonor.mutateAsync(newDonor);
       await addBloodUnit.mutateAsync(newBloodUnit);
       setOpen(false);
-      setForm({ name: "", age: "", gender: "Male", bloodGroup: "O+", contact: "", address: "" });
+      setForm({ name: "", age: "", gender: "Male", bloodGroup: "O+", contact: "", address: "", componentType: "Whole Blood" });
       toast({ title: "Donor registered", description: `${form.name} has been added with a blood unit.` });
     } catch (error) {
       toast({ title: "Error", description: "Failed to register donor.", variant: "destructive" });
@@ -100,7 +101,13 @@ export default function DonorsPage() {
                 </div>
               </div>
               <div><Label>Contact</Label><Input value={form.contact} onChange={(e) => setForm({ ...form, contact: e.target.value })} placeholder="Phone number" /></div>
-              <div><Label>Address</Label><Input value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} placeholder="City, State" /></div>
+              <div><Label>Blood Component</Label>
+                <Select value={form.componentType} onValueChange={(v) => setForm({ ...form, componentType: v })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>{["Whole Blood","Plasma","RBC","WBC","Platelets"].map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
+              <div className="col-span-2"><Label>Address</Label><Input value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} placeholder="City, State" /></div>
               <Button onClick={handleAdd} disabled={addDonor.isPending} className="gradient-primary border-0 w-full">
                 {addDonor.isPending ? "Registering..." : "Register Donor"}
               </Button>
