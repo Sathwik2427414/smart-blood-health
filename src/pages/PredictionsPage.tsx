@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { CBCInput, PredictionResult, predictDiseases, generateSampleCBC } from "@/lib/predictionEngine";
-import { useAddLabTest, useAddPrediction, useLabTests, usePredictions } from "@/hooks/useDatabaseQueries";
+import { useAddLabTest, useAddPrediction, useLabTests, usePredictions, useAddNotification, useDonors } from "@/hooks/useDatabaseQueries";
 import { useToast } from "@/hooks/use-toast";
 
 const container = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.05 } } };
@@ -44,8 +44,10 @@ export default function PredictionsPage() {
 
   const addLabTest = useAddLabTest();
   const addPrediction = useAddPrediction();
+  const addNotification = useAddNotification();
   const { data: labTests = [] } = useLabTests();
   const { data: predictions = [] } = usePredictions();
+  const { data: donors = [] } = useDonors();
   const { toast } = useToast();
 
   const handlePredict = () => {
@@ -114,7 +116,27 @@ export default function PredictionsPage() {
         });
       }
 
-      toast({ title: "Saved!", description: `Lab test & ${results.length} prediction(s) saved for ${donorName}.` });
+      // Find donor to link notification
+      const matchedDonor = donors.find(d => d.name.toLowerCase() === donorName.trim().toLowerCase());
+      const severities = results.map(r => r.severity);
+      const worstSeverity = severities.includes("severe") ? "severe" : severities.includes("moderate") ? "moderate" : severities.includes("mild") ? "mild" : "normal";
+      const notifType = worstSeverity === "normal" ? "info" : worstSeverity === "mild" ? "warning" : "alert";
+      const diseaseList = results.filter(r => r.severity !== "normal").map(r => r.disease).join(", ");
+      const notifMessage = worstSeverity === "normal"
+        ? `All CBC parameters are within normal range for ${donorName.trim()}.`
+        : `Abnormal values detected: ${diseaseList}. Please consult a medical professional.`;
+
+      await addNotification.mutateAsync({
+        id: `N${Date.now()}`,
+        type: notifType as "alert" | "info" | "warning",
+        title: `Prediction Result — ${donorName.trim()}`,
+        message: notifMessage,
+        date: today,
+        read: false,
+        donorId: matchedDonor?.id,
+      });
+
+      toast({ title: "Saved!", description: `Lab test, ${results.length} prediction(s) & notification saved for ${donorName}.` });
     } catch (error) {
       toast({ title: "Error", description: "Failed to save results.", variant: "destructive" });
     } finally {
