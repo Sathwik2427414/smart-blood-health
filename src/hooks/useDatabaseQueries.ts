@@ -229,3 +229,22 @@ export function useAddPrediction() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["predictions"] }),
   });
 }
+
+export function useAddNotification() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (notif: Notification) => {
+      const { error } = await supabase.from("notifications").insert({
+        id: notif.id,
+        type: notif.type,
+        title: notif.title,
+        message: notif.message,
+        date: notif.date,
+        read: notif.read,
+        donor_id: notif.donorId || null,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["notifications"] }),
+  });
+}

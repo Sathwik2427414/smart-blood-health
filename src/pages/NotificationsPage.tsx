@@ -1,7 +1,8 @@
 import { motion } from "framer-motion";
-import { Bell, Check } from "lucide-react";
-import { useNotifications, useMarkAllNotificationsRead } from "@/hooks/useDatabaseQueries";
+import { Bell, Check, Send } from "lucide-react";
+import { useNotifications, useMarkAllNotificationsRead, useDonors } from "@/hooks/useDatabaseQueries";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
 
 const container = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.05 } } };
 const item = { hidden: { opacity: 0, y: 15 }, show: { opacity: 1, y: 0 } };
@@ -10,9 +11,39 @@ const typeIcon: Record<string, string> = { alert: "🔴", warning: "🟡", info:
 
 export default function NotificationsPage() {
   const { data: notifications = [], isLoading } = useNotifications();
+  const { data: donors = [] } = useDonors();
   const markAllRead = useMarkAllNotificationsRead();
+  const { toast } = useToast();
 
   const unread = notifications.filter((n) => !n.read).length;
+
+  const handleSendSMS = (notif: typeof notifications[0]) => {
+    // Find donor by donorId or by name from title
+    let donor = notif.donorId ? donors.find(d => d.id === notif.donorId) : null;
+    if (!donor) {
+      // Try to extract name from title "Prediction Result — Name"
+      const nameMatch = notif.title.match(/—\s*(.+)$/);
+      if (nameMatch) {
+        donor = donors.find(d => d.name.toLowerCase() === nameMatch[1].trim().toLowerCase());
+      }
+    }
+
+    if (!donor) {
+      toast({ title: "Donor not found", description: "Could not find donor details to send message.", variant: "destructive" });
+      return;
+    }
+
+    if (!donor.contact) {
+      toast({ title: "No contact number", description: `No phone number found for ${donor.name}.`, variant: "destructive" });
+      return;
+    }
+
+    // Mock SMS send
+    toast({
+      title: "📱 SMS Sent!",
+      description: `Message sent to ${donor.name} at ${donor.contact}: "${notif.message}"`,
+    });
+  };
 
   if (isLoading) {
     return <div className="flex items-center justify-center h-64 text-muted-foreground">Loading notifications...</div>;
@@ -46,7 +77,19 @@ export default function NotificationsPage() {
                 </div>
                 <p className="text-xs text-muted-foreground mt-1">{n.message}</p>
               </div>
-              {!n.read && <div className="w-2 h-2 rounded-full bg-primary shrink-0 mt-1.5 animate-pulse-glow" />}
+              <div className="flex items-center gap-2 shrink-0">
+                {n.donorId && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleSendSMS(n)}
+                    className="gap-1.5 text-xs"
+                  >
+                    <Send className="w-3 h-3" /> Send
+                  </Button>
+                )}
+                {!n.read && <div className="w-2 h-2 rounded-full bg-primary shrink-0 mt-1.5 animate-pulse-glow" />}
+              </div>
             </div>
           </div>
         ))}
