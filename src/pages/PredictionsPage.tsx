@@ -84,7 +84,7 @@ export default function PredictionsPage() {
       // Save lab test
       await addLabTest.mutateAsync({
         id: labTestId,
-        bloodUnitId: "",
+        bloodUnitId: null as any,
         donorName: donorName.trim(),
         bloodGroup: bloodGroup,
         date: today,

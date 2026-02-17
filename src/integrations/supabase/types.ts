@@ -100,7 +100,7 @@ export type Database = {
       lab_tests: {
         Row: {
           blood_group: string
-          blood_unit_id: string
+          blood_unit_id: string | null
           created_at: string
           date: string
           donor_name: string
@@ -117,7 +117,7 @@ export type Database = {
         }
         Insert: {
           blood_group: string
-          blood_unit_id: string
+          blood_unit_id?: string | null
           created_at?: string
           date: string
           donor_name: string
@@ -134,7 +134,7 @@ export type Database = {
         }
         Update: {
           blood_group?: string
-          blood_unit_id?: string
+          blood_unit_id?: string | null
           created_at?: string
           date?: string
           donor_name?: string
@@ -149,15 +149,7 @@ export type Database = {
           result?: string
           wbc_count?: number
         }
-        Relationships: [
-          {
-            foreignKeyName: "lab_tests_blood_unit_id_fkey"
-            columns: ["blood_unit_id"]
-            isOneToOne: false
-            referencedRelation: "blood_units"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       notifications: {
         Row: {
