@@ -78,16 +78,14 @@ export default function NotificationsPage() {
                 <p className="text-xs text-muted-foreground mt-1">{n.message}</p>
               </div>
               <div className="flex items-center gap-2 shrink-0">
-                {n.donorId && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleSendSMS(n)}
-                    className="gap-1.5 text-xs"
-                  >
-                    <Send className="w-3 h-3" /> Send
-                  </Button>
-                )}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleSendSMS(n)}
+                  className="gap-1.5 text-xs"
+                >
+                  <Send className="w-3 h-3" /> Send
+                </Button>
                 {!n.read && <div className="w-2 h-2 rounded-full bg-primary shrink-0 mt-1.5 animate-pulse-glow" />}
               </div>
             </div>
