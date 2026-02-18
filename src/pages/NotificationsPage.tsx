@@ -18,30 +18,45 @@ export default function NotificationsPage() {
   const unread = notifications.filter((n) => !n.read).length;
 
   const handleSendSMS = (notif: typeof notifications[0]) => {
-    // Find donor by donorId or by name from title
+    // 1. Try donor by donorId
     let donor = notif.donorId ? donors.find(d => d.id === notif.donorId) : null;
+
+    // 2. Try by name extracted from title "Prediction Result — Name"
     if (!donor) {
-      // Try to extract name from title "Prediction Result — Name"
       const nameMatch = notif.title.match(/—\s*(.+)$/);
       if (nameMatch) {
-        donor = donors.find(d => d.name.toLowerCase() === nameMatch[1].trim().toLowerCase());
+        const extractedName = nameMatch[1].trim().toLowerCase();
+        donor = donors.find(d => d.name.toLowerCase() === extractedName);
       }
     }
 
+    // 3. Try any word in the title that matches a donor name
     if (!donor) {
-      toast({ title: "Donor not found", description: "Could not find donor details to send message.", variant: "destructive" });
+      donor = donors.find(d => notif.title.toLowerCase().includes(d.name.toLowerCase()));
+    }
+
+    if (!donor) {
+      toast({
+        title: "Donor not found",
+        description: "No matching donor in the system for this notification. Make sure the donor is registered in Donor Management.",
+        variant: "destructive",
+      });
       return;
     }
 
     if (!donor.contact) {
-      toast({ title: "No contact number", description: `No phone number found for ${donor.name}.`, variant: "destructive" });
+      toast({
+        title: "No contact number",
+        description: `No phone number found for ${donor.name}. Update their contact in Donor Management.`,
+        variant: "destructive",
+      });
       return;
     }
 
     // Mock SMS send
     toast({
       title: "📱 SMS Sent!",
-      description: `Message sent to ${donor.name} at ${donor.contact}: "${notif.message}"`,
+      description: `Message sent to ${donor.name} (${donor.contact}): "${notif.message}"`,
     });
   };
 
@@ -67,13 +82,13 @@ export default function NotificationsPage() {
 
       <motion.div variants={item} className="space-y-3">
         {notifications.map((n) => (
-          <div key={n.id} className={`bg-card border rounded-xl p-4 transition-all ${!n.read ? "border-primary/30 bg-accent/30 shadow-sm" : "border-border"}`}>
+          <div key={n.id} className={`bg-card border rounded-xl p-4 transition-all ${!n.read ? "border-destructive/30 bg-destructive/5 shadow-sm" : "border-success/20 bg-success/5"}`}>
             <div className="flex items-start gap-3">
               <span className="text-lg">{typeIcon[n.type]}</span>
-              <div className="flex-1">
-                <div className="flex items-center justify-between">
-                  <h4 className="text-sm font-semibold text-foreground">{n.title}</h4>
-                  <span className="text-[10px] text-muted-foreground">{n.date}</span>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center justify-between gap-2">
+                  <h4 className="text-sm font-semibold text-foreground truncate">{n.title}</h4>
+                  <span className="text-[10px] text-muted-foreground shrink-0">{n.date}</span>
                 </div>
                 <p className="text-xs text-muted-foreground mt-1">{n.message}</p>
               </div>
@@ -86,7 +101,15 @@ export default function NotificationsPage() {
                 >
                   <Send className="w-3 h-3" /> Send
                 </Button>
-                {!n.read && <div className="w-2 h-2 rounded-full bg-primary shrink-0 mt-1.5 animate-pulse-glow" />}
+                {/* Read status dot: green = read, red = unread */}
+                <div
+                  className={`w-2.5 h-2.5 rounded-full shrink-0 ${
+                    n.read
+                      ? "bg-success"
+                      : "bg-destructive animate-pulse"
+                  }`}
+                  title={n.read ? "Read" : "Unread"}
+                />
               </div>
             </div>
           </div>
