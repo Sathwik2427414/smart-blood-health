@@ -69,6 +69,7 @@ export type Database = {
           contact: string
           created_at: string
           eligible: boolean
+          email: string
           gender: string
           id: string
           last_donation_date: string
@@ -81,6 +82,7 @@ export type Database = {
           contact?: string
           created_at?: string
           eligible?: boolean
+          email?: string
           gender: string
           id: string
           last_donation_date: string
@@ -93,6 +95,7 @@ export type Database = {
           contact?: string
           created_at?: string
           eligible?: boolean
+          email?: string
           gender?: string
           id?: string
           last_donation_date?: string

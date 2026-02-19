@@ -1,0 +1,1 @@
+ALTER TABLE public.donors ADD COLUMN IF NOT EXISTS email text NOT NULL DEFAULT '';
