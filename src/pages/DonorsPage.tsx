@@ -23,7 +23,7 @@ export default function DonorsPage() {
   const { toast } = useToast();
   const [search, setSearch] = useState("");
   const [open, setOpen] = useState(false);
-  const [form, setForm] = useState({ name: "", age: "", gender: "Male" as Donor["gender"], bloodGroup: "O+" as Donor["bloodGroup"], contact: "", address: "", componentType: "Whole Blood" });
+  const [form, setForm] = useState({ name: "", age: "", gender: "Male" as Donor["gender"], bloodGroup: "O+" as Donor["bloodGroup"], contact: "", email: "", address: "", componentType: "Whole Blood" });
 
   const filtered = donors.filter((d) => d.name.toLowerCase().includes(search.toLowerCase()) || d.bloodGroup.toLowerCase().includes(search.toLowerCase()));
 
@@ -34,8 +34,13 @@ export default function DonorsPage() {
     const expiryDate = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
     const newDonor: Donor = {
       id: donorId,
-      ...form,
+      name: form.name,
       age: parseInt(form.age),
+      gender: form.gender,
+      bloodGroup: form.bloodGroup,
+      contact: form.contact,
+      email: form.email,
+      address: form.address,
       lastDonationDate: today,
       eligible: true,
     };
@@ -53,7 +58,7 @@ export default function DonorsPage() {
       await addDonor.mutateAsync(newDonor);
       await addBloodUnit.mutateAsync(newBloodUnit);
       setOpen(false);
-      setForm({ name: "", age: "", gender: "Male", bloodGroup: "O+", contact: "", address: "", componentType: "Whole Blood" });
+      setForm({ name: "", age: "", gender: "Male", bloodGroup: "O+", contact: "", email: "", address: "", componentType: "Whole Blood" });
       toast({ title: "Donor registered", description: `${form.name} has been added with a blood unit.` });
     } catch (error) {
       toast({ title: "Error", description: "Failed to register donor.", variant: "destructive" });
@@ -101,6 +106,7 @@ export default function DonorsPage() {
                 </div>
               </div>
               <div><Label>Contact</Label><Input value={form.contact} onChange={(e) => setForm({ ...form, contact: e.target.value })} placeholder="Phone number" /></div>
+              <div><Label>Email</Label><Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="donor@email.com" /></div>
               <div><Label>Blood Component</Label>
                 <Select value={form.componentType} onValueChange={(v) => setForm({ ...form, componentType: v })}>
                   <SelectTrigger><SelectValue /></SelectTrigger>

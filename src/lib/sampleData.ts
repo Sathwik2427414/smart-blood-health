@@ -1,12 +1,12 @@
 import { Donor, BloodUnit, LabTest, Prediction, Notification } from "./types";
 
 export const sampleDonors: Donor[] = [
-  { id: "D001", name: "Rahul Sharma", age: 28, gender: "Male", bloodGroup: "O+", contact: "+91 98765 43210", address: "Mumbai, Maharashtra", lastDonationDate: "2025-11-15", eligible: true },
-  { id: "D002", name: "Priya Patel", age: 32, gender: "Female", bloodGroup: "A+", contact: "+91 87654 32109", address: "Delhi, NCR", lastDonationDate: "2025-12-20", eligible: true },
-  { id: "D003", name: "Amit Kumar", age: 45, gender: "Male", bloodGroup: "B+", contact: "+91 76543 21098", address: "Bangalore, Karnataka", lastDonationDate: "2025-10-05", eligible: true },
-  { id: "D004", name: "Sneha Reddy", age: 24, gender: "Female", bloodGroup: "AB-", contact: "+91 65432 10987", address: "Hyderabad, Telangana", lastDonationDate: "2026-01-10", eligible: false },
-  { id: "D005", name: "Vikram Singh", age: 36, gender: "Male", bloodGroup: "O-", contact: "+91 54321 09876", address: "Pune, Maharashtra", lastDonationDate: "2025-09-25", eligible: true },
-  { id: "D006", name: "Anjali Gupta", age: 29, gender: "Female", bloodGroup: "A-", contact: "+91 43210 98765", address: "Chennai, Tamil Nadu", lastDonationDate: "2025-11-30", eligible: true },
+  { id: "D001", name: "Rahul Sharma", age: 28, gender: "Male", bloodGroup: "O+", contact: "+91 98765 43210", email: "", address: "Mumbai, Maharashtra", lastDonationDate: "2025-11-15", eligible: true },
+  { id: "D002", name: "Priya Patel", age: 32, gender: "Female", bloodGroup: "A+", contact: "+91 87654 32109", email: "", address: "Delhi, NCR", lastDonationDate: "2025-12-20", eligible: true },
+  { id: "D003", name: "Amit Kumar", age: 45, gender: "Male", bloodGroup: "B+", contact: "+91 76543 21098", email: "", address: "Bangalore, Karnataka", lastDonationDate: "2025-10-05", eligible: true },
+  { id: "D004", name: "Sneha Reddy", age: 24, gender: "Female", bloodGroup: "AB-", contact: "+91 65432 10987", email: "", address: "Hyderabad, Telangana", lastDonationDate: "2026-01-10", eligible: false },
+  { id: "D005", name: "Vikram Singh", age: 36, gender: "Male", bloodGroup: "O-", contact: "+91 54321 09876", email: "", address: "Pune, Maharashtra", lastDonationDate: "2025-09-25", eligible: true },
+  { id: "D006", name: "Anjali Gupta", age: 29, gender: "Female", bloodGroup: "A-", contact: "+91 43210 98765", email: "", address: "Chennai, Tamil Nadu", lastDonationDate: "2025-11-30", eligible: true },
 ];
 
 export const sampleBloodUnits: BloodUnit[] = [

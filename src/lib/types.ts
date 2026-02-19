@@ -5,6 +5,7 @@ export interface Donor {
   gender: "Male" | "Female" | "Other";
   bloodGroup: "A+" | "A-" | "B+" | "B-" | "AB+" | "AB-" | "O+" | "O-";
   contact: string;
+  email: string;
   address: string;
   lastDonationDate: string;
   eligible: boolean;
