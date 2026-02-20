@@ -107,25 +107,6 @@ export default function Dashboard() {
         </motion.div>
       </div>
 
-      {/* Recent Alerts */}
-      <motion.div variants={item} className="bg-card border border-border rounded-xl p-6">
-        <h3 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
-          <Activity className="w-4 h-4 text-primary" />
-          Recent Alerts & Predictions
-        </h3>
-        <div className="space-y-3">
-          {notifications.slice(0, 4).map((n) => (
-            <div key={n.id} className={`flex items-start gap-3 p-3 rounded-lg border ${!n.read ? "bg-accent/50 border-primary/20" : "border-border"}`}>
-              <div className={`w-2 h-2 mt-1.5 rounded-full shrink-0 ${n.type === "alert" ? "bg-destructive animate-pulse-glow" : n.type === "warning" ? "bg-warning" : "bg-info"}`} />
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-foreground">{n.title}</p>
-                <p className="text-xs text-muted-foreground mt-0.5">{n.message}</p>
-              </div>
-              <span className="text-[10px] text-muted-foreground shrink-0">{n.date}</span>
-            </div>
-          ))}
-        </div>
-      </motion.div>
     </motion.div>
   );
 }
