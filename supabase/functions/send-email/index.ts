@@ -16,8 +16,6 @@ serve(async (req) => {
     const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY');
     if (!RESEND_API_KEY) throw new Error('RESEND_API_KEY is not configured');
 
-    // Resend free/testing tier only allows sending to the verified account email.
-    // We route to the lab staff (account owner) and include the donor's email in the body.
     const res = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
@@ -25,23 +23,21 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        from: 'onboarding@resend.dev',
-        to: ['23b81a66b0@cvr.ac.in'], // Resend verified account email (testing mode)
+        from: 'Blood Bank <notifications@cvr.ac.in>',
+        to: [to],
         subject: `[Blood Bank] ${subject}`,
         html: `
           <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; background: #fff;">
             <h2 style="color: #e11d48; margin-bottom: 4px;">🩸 Blood Bank Notification</h2>
             <hr style="border: none; border-top: 2px solid #fecdd3; margin-bottom: 20px;" />
-            <p style="margin: 0 0 8px;"><strong>Donor:</strong> ${name}</p>
-            <p style="margin: 0 0 8px;"><strong>Donor Email:</strong> ${to}</p>
-            <p style="margin: 0 0 20px;"><strong>Subject:</strong> ${subject}</p>
+            <p style="margin: 0 0 8px;">Dear <strong>${name}</strong>,</p>
             <div style="background: #fff1f2; border-left: 4px solid #e11d48; padding: 16px; border-radius: 4px;">
               <p style="margin: 0; color: #374151;">${message}</p>
             </div>
             <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 24px 0;" />
             <p style="color: #9ca3af; font-size: 11px;">
-              ⚠️ <strong>Testing mode:</strong> Delivered to lab staff instead of donor directly.<br/>
-              To send directly to donors, verify your domain at <a href="https://resend.com/domains">resend.com/domains</a> and update the <code>to</code> field in the edge function.
+              This is an automated message from the Blood Bank Management System.<br/>
+              Please consult your healthcare provider for any medical questions.
             </p>
           </div>
         `,
