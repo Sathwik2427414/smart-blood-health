@@ -1,10 +1,13 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Bell, Check, Send } from "lucide-react";
+import { Bell, Check, Send, Mail, User, FileText } from "lucide-react";
 import { useNotifications, useMarkAllNotificationsRead, useDonors } from "@/hooks/useDatabaseQueries";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose,
+} from "@/components/ui/dialog";
 
 const container = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.05 } } };
 const item = { hidden: { opacity: 0, y: 15 }, show: { opacity: 1, y: 0 } };
@@ -17,14 +20,12 @@ export default function NotificationsPage() {
   const markAllRead = useMarkAllNotificationsRead();
   const { toast } = useToast();
   const [sending, setSending] = useState<string | null>(null);
+  const [emailDialog, setEmailDialog] = useState<{ open: boolean; notif: typeof notifications[0] | null; donorName: string; donorEmail: string }>({ open: false, notif: null, donorName: "", donorEmail: "" });
 
   const unread = notifications.filter((n) => !n.read).length;
 
-  const handleSendEmail = async (notif: typeof notifications[0]) => {
-    // 1. Try donor by donorId
+  const resolveDonor = (notif: typeof notifications[0]) => {
     let donor = notif.donorId ? donors.find(d => d.id === notif.donorId) : null;
-
-    // 2. Try by name extracted from title "Prediction Result — Name"
     if (!donor) {
       const nameMatch = notif.title.match(/—\s*(.+)$/);
       if (nameMatch) {
@@ -32,36 +33,41 @@ export default function NotificationsPage() {
         donor = donors.find(d => d.name.toLowerCase() === extractedName);
       }
     }
-
-    // 3. Try any word in the title that matches a donor name
     if (!donor) {
       donor = donors.find(d => notif.title.toLowerCase().includes(d.name.toLowerCase()));
     }
+    return donor;
+  };
 
+  const handleSendClick = (notif: typeof notifications[0]) => {
+    const donor = resolveDonor(notif);
     if (!donor) {
       toast({ title: "Donor not found", description: "No matching donor found for this notification.", variant: "destructive" });
       return;
     }
-
     if (!donor.email) {
-      toast({ title: "No email address", description: `No email found for ${donor.name}. Update their contact in Donor Management.`, variant: "destructive" });
+      toast({ title: "No email address", description: `No email found for ${donor.name}.`, variant: "destructive" });
       return;
     }
+    setEmailDialog({ open: true, notif, donorName: donor.name, donorEmail: donor.email });
+  };
 
+  const handleConfirmSend = async () => {
+    if (!emailDialog.notif) return;
+    const notif = emailDialog.notif;
     setSending(notif.id);
+    setEmailDialog(prev => ({ ...prev, open: false }));
     try {
       const { data, error } = await supabase.functions.invoke("send-email", {
         body: {
-          to: donor.email,
-          name: donor.name,
+          to: emailDialog.donorEmail,
+          name: emailDialog.donorName,
           subject: notif.title,
           message: notif.message,
         },
       });
-
       if (error || !data?.success) throw new Error(error?.message || data?.error || "Failed to send");
-
-      toast({ title: "📧 Email Sent!", description: `Email sent to ${donor.name} (${donor.email})` });
+      toast({ title: "📧 Email Sent!", description: `Email sent to ${emailDialog.donorName} (${emailDialog.donorEmail})` });
     } catch (err: any) {
       toast({ title: "Failed to send", description: err.message, variant: "destructive" });
     } finally {
@@ -105,7 +111,7 @@ export default function NotificationsPage() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => handleSendEmail(n)}
+                  onClick={() => handleSendClick(n)}
                   disabled={sending === n.id}
                   className="gap-1.5 text-xs"
                 >
@@ -125,6 +131,41 @@ export default function NotificationsPage() {
           </div>
         ))}
       </motion.div>
+
+      {/* Email Preview Dialog */}
+      <Dialog open={emailDialog.open} onOpenChange={(open) => setEmailDialog(prev => ({ ...prev, open }))}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Mail className="w-5 h-5 text-primary" /> Send Email
+            </DialogTitle>
+            <DialogDescription>Review the email details before sending.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            <div className="flex items-center gap-2 text-sm">
+              <User className="w-4 h-4 text-muted-foreground" />
+              <span className="font-medium">To:</span>
+              <span>{emailDialog.donorName} ({emailDialog.donorEmail})</span>
+            </div>
+            <div className="flex items-start gap-2 text-sm">
+              <FileText className="w-4 h-4 text-muted-foreground mt-0.5" />
+              <span className="font-medium">Subject:</span>
+              <span>{emailDialog.notif?.title}</span>
+            </div>
+            <div className="bg-muted/50 border rounded-lg p-3 text-sm text-muted-foreground">
+              {emailDialog.notif?.message}
+            </div>
+          </div>
+          <DialogFooter className="gap-2">
+            <DialogClose asChild>
+              <Button variant="outline" size="sm">Cancel</Button>
+            </DialogClose>
+            <Button size="sm" onClick={handleConfirmSend} className="gap-1.5">
+              <Send className="w-3 h-3" /> Send Email
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </motion.div>
   );
 }
