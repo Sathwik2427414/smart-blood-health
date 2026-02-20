@@ -27,24 +27,8 @@ export default function DonorsPage() {
 
   const filtered = donors.filter((d) => d.name.toLowerCase().includes(search.toLowerCase()) || d.bloodGroup.toLowerCase().includes(search.toLowerCase()));
 
-  const [whatsappUrl, setWhatsappUrl] = useState<string | null>(null);
-  const [phoneError, setPhoneError] = useState("");
-
-  const formatPhone = (phone: string): string | null => {
-    const digits = phone.replace(/\D/g, "");
-    if (digits.length === 10) return `91${digits}`;
-    if (digits.length === 12 && digits.startsWith("91")) return digits;
-    return null;
-  };
-
   const handleAdd = async () => {
     if (!form.name || !form.age) return;
-    const formatted = formatPhone(form.contact);
-    if (!formatted) {
-      setPhoneError("Phone number must be 10 digits (e.g. 9876543210)");
-      return;
-    }
-    setPhoneError("");
     const donorId = `D${String(donors.length + 1).padStart(3, "0")}`;
     const today = new Date().toISOString().split("T")[0];
     const expiryDate = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
@@ -73,9 +57,6 @@ export default function DonorsPage() {
     try {
       await addDonor.mutateAsync(newDonor);
       await addBloodUnit.mutateAsync(newBloodUnit);
-      const msg = `Hello ${form.name}, thank you for donating ${form.bloodGroup} blood on ${today}. Your contribution saves lives! 🩸`;
-      const url = `https://wa.me/${formatted}?text=${encodeURIComponent(msg)}`;
-      setWhatsappUrl(url);
       setOpen(false);
       setForm({ name: "", age: "", gender: "Male", bloodGroup: "O+", contact: "", email: "", address: "", componentType: "Whole Blood" });
       toast({ title: "Donor registered", description: `${form.name} has been added with a blood unit.` });
@@ -124,9 +105,7 @@ export default function DonorsPage() {
                   </Select>
                 </div>
               </div>
-              <div><Label>Contact</Label><Input value={form.contact} onChange={(e) => { setForm({ ...form, contact: e.target.value }); setPhoneError(""); }} placeholder="10-digit phone number" />
-                {phoneError && <p className="text-xs text-destructive mt-1">{phoneError}</p>}
-              </div>
+              <div><Label>Contact</Label><Input value={form.contact} onChange={(e) => setForm({ ...form, contact: e.target.value })} placeholder="Phone number" /></div>
               <div><Label>Email</Label><Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="donor@email.com" /></div>
               <div><Label>Blood Component</Label>
                 <Select value={form.componentType} onValueChange={(v) => setForm({ ...form, componentType: v })}>
@@ -142,22 +121,6 @@ export default function DonorsPage() {
           </DialogContent>
         </Dialog>
       </motion.div>
-
-      {/* WhatsApp Success Banner */}
-      {whatsappUrl && (
-        <motion.div variants={item} className="flex items-center gap-3 bg-green-500/10 border border-green-500/30 rounded-xl px-5 py-4">
-          <span className="text-green-500 text-xl">✅</span>
-          <p className="text-sm text-foreground flex-1">Donor registered! Send a thank-you via WhatsApp:</p>
-          <a href={whatsappUrl} target="_blank" rel="noopener noreferrer">
-            <Button size="sm" className="bg-green-600 hover:bg-green-700 text-white gap-2 border-0">
-              💬 Send WhatsApp Message
-            </Button>
-          </a>
-          <Button size="sm" variant="ghost" onClick={() => setWhatsappUrl(null)} className="text-muted-foreground">
-            <X className="w-4 h-4" />
-          </Button>
-        </motion.div>
-      )}
 
       {/* Search */}
       <motion.div variants={item} className="relative max-w-sm">
