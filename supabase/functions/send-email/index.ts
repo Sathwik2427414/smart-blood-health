@@ -14,8 +14,8 @@ serve(async (req) => {
   try {
     const { to, name, subject, message } = await req.json();
 
-    const GMAIL_USER = Deno.env.get('GMAIL_USER');
-    const GMAIL_APP_PASSWORD = Deno.env.get('GMAIL_APP_PASSWORD');
+    const GMAIL_USER = Deno.env.get('GMAIL_USER')?.trim();
+    const GMAIL_APP_PASSWORD = Deno.env.get('GMAIL_APP_PASSWORD')?.replace(/\s/g, '');
     if (!GMAIL_USER) throw new Error('GMAIL_USER is not configured');
     if (!GMAIL_APP_PASSWORD) throw new Error('GMAIL_APP_PASSWORD is not configured');
 
